@@ -10,30 +10,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Ambil kode dari repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # 2. DEBUG SECRET (INI YANG KAMU MINTA)
+      - name: Debug SECRET
+        env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+        run: |
+          echo "SERVER_IP=[$SERVER_IP]"
+
+      # 3. SETUP SSH
       - name: Setup SSH
         env:
           SERVER_IP: ${{ secrets.SERVER_IP }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
-
-          echo "SERVER_IP=$SERVER_IP"
-
-          if [ -z "$SERVER_IP" ]; then
-            echo "❌ SERVER_IP IS EMPTY"
-            exit 1
-          fi
 
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
           ssh-keyscan -p 8022 -H "$SERVER_IP" >> ~/.ssh/known_hosts
 
+      # 4. DEPLOY KE SERVER
       - name: Deploy to Server
         env:
           SERVER_IP: ${{ secrets.SERVER_IP }}
