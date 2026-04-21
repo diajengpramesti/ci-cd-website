@@ -10,28 +10,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    # 🔍 DEBUG SECRETS (INI YANG KAMU TANYA TARO DI SINI)
-    - name: Debug Secrets
-      run: |
-        echo "SERVER_IP=${{ secrets.SERVER_IP }}"
-        echo "USER=${{ secrets.SERVER_USER }}"
-        echo "DEPLOY_PATH=${{ secrets.DEPLOY_PATH }}"
+      - name: Setup SSH
+        env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
 
-    - name: Setup SSH
-      run: |
-        mkdir -p ~/.ssh
+          echo "SERVER_IP=$SERVER_IP"
 
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
+          if [ -z "$SERVER_IP" ]; then
+            echo "❌ SERVER_IP IS EMPTY"
+            exit 1
+          fi
 
-        ssh-keyscan -p 8022 -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-    - name: Deploy to Server
-      run: |
-        rsync -avz --delete \
-        -e "ssh -p 8022 -i ~/.ssh/id_rsa" \
-        ./ \
-        ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_PATH }}
+          ssh-keyscan -p 8022 -H "$SERVER_IP" >> ~/.ssh/known_hosts
+
+      - name: Deploy to Server
+        run: |
+          rsync -avz --delete \
+          -e "ssh -p 8022 -i ~/.ssh/id_rsa" \
+          ./ \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_PATH }}
