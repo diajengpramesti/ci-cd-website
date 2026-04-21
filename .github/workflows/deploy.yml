@@ -16,6 +16,8 @@ jobs:
       - name: Setup SSH
         env:
           SERVER_IP: ${{ secrets.SERVER_IP }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
@@ -33,8 +35,12 @@ jobs:
           ssh-keyscan -p 8022 -H "$SERVER_IP" >> ~/.ssh/known_hosts
 
       - name: Deploy to Server
+        env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
           rsync -avz --delete \
           -e "ssh -p 8022 -i ~/.ssh/id_rsa" \
           ./ \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_PATH }}
+          $SERVER_USER@$SERVER_IP:$DEPLOY_PATH
