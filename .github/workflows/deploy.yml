@@ -13,16 +13,25 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
+    # 🔍 DEBUG SECRETS (INI YANG KAMU TANYA TARO DI SINI)
+    - name: Debug Secrets
+      run: |
+        echo "SERVER_IP=${{ secrets.SERVER_IP }}"
+        echo "USER=${{ secrets.SERVER_USER }}"
+        echo "DEPLOY_PATH=${{ secrets.DEPLOY_PATH }}"
+
     - name: Setup SSH
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/tes_server_polindra
-        chmod 600 ~/.ssh/tes_server_polindra
+
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+
         ssh-keyscan -p 8022 -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
 
     - name: Deploy to Server
       run: |
-        rsync -avz --delete \\
-        -e "ssh -p 8022 -i ~/.ssh/tes_server_polindra" \\
-        ./ \\
+        rsync -avz --delete \
+        -e "ssh -p 8022 -i ~/.ssh/id_rsa" \
+        ./ \
         ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_PATH }}
