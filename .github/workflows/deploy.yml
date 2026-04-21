@@ -10,38 +10,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Ambil kode dari repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. DEBUG SECRET (INI YANG KAMU MINTA)
-      - name: Debug SECRET
-        env:
-          SERVER_IP: ${{ secrets.SERVER_IP }}
-        run: |
-          echo "SERVER_IP=[$SERVER_IP]"
-
-      # 3. SETUP SSH
       - name: Setup SSH
-        env:
-          SERVER_IP: ${{ secrets.SERVER_IP }}
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
+          printf "%s\n" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/tes_server_polindra
+          chmod 600 ~/.ssh/tes_server_polindra
+          ssh-keyscan -p 8022 -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
 
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+      - name: Test SSH
+        run: |
+          ssh -i ~/.ssh/tes_server_polindra -p 8022 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} "echo CONNECTED"
 
-          ssh-keyscan -p 8022 -H "$SERVER_IP" >> ~/.ssh/known_hosts
-
-      # 4. DEPLOY KE SERVER
       - name: Deploy to Server
-        env:
-          SERVER_IP: ${{ secrets.SERVER_IP }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
           rsync -avz --delete \
-          -e "ssh -p 8022 -i ~/.ssh/id_rsa" \
+          -e "ssh -p 8022 -i ~/.ssh/tes_server_polindra" \
           ./ \
-          $SERVER_USER@$SERVER_IP:$DEPLOY_PATH
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_PATH }}
